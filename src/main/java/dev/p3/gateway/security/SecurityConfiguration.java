@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.ArrayList;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.p3.gateway.audit.AuditTrail;
+import dev.p3.gateway.audit.AuthenticationAuditFilter;
 import dev.p3.gateway.mcp.McpBoundaryFilter;
 import org.springaicommunity.mcp.security.server.apikey.memory.ApiKeyEntityImpl;
 import org.springaicommunity.mcp.security.server.apikey.memory.InMemoryApiKeyEntityRepository;
@@ -32,6 +33,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableMethodSecurity
@@ -68,6 +70,7 @@ public class SecurityConfiguration {
                 if (headers.hasMoreElements() || !raw.matches("[A-Za-z0-9-]{1,32}\\.[A-Za-z0-9_-]{32,64}")) return null;
                 return new ApiKeyAuthenticationConverter().convert(req);
             }))
+            .addFilterBefore(new AuthenticationAuditFilter(audit), UsernamePasswordAuthenticationFilter.class)
             .addFilterAfter(new McpBoundaryFilter(mapper, audit, identities), AuthorizationFilter.class)
             .build();
     }

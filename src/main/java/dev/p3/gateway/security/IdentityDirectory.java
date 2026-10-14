@@ -15,6 +15,7 @@ public class IdentityDirectory {
         "buyer-a", new Identity("buyer-a", "BUYER", "tenant-a", Set.of("inventory.read", "purchase_order.update"), Set.of("sku-a1", "po-a1")),
         "buyer-b", new Identity("buyer-b", "BUYER", "tenant-b", Set.of("inventory.read", "purchase_order.update"), Set.of("sku-b1", "po-b1"))
     );
+    public Identity findById(String id) { return identities.get(id); }
     public Identity resolve(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()
                 || !(authentication.getPrincipal() instanceof ApiKeyEntity principal)) return null;

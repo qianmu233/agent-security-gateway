@@ -11,6 +11,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.p3.gateway.audit.AuditTrail;
 import dev.p3.gateway.erp.ErpStore;
+import dev.p3.gateway.security.TrustedIntentConsole;
+import dev.p3.gateway.support.TrustedUser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,7 @@ class McpSecurityIT {
     @Autowired ObjectMapper mapper;
     @Autowired ErpStore store;
     @Autowired AuditTrail audit;
+    @Autowired TrustedIntentConsole console;
     private final HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     private String key(String identity) {
         return identity + "." + System.getenv(switch (identity) {
@@ -104,7 +107,8 @@ class McpSecurityIT {
     }
     @Test void buyerUpdatesOwnOrderWithObservableMutation() throws Exception {
         int before = store.order("po-a1").version();
-        var result = call("buyer-a", "purchase_order.update", Map.of("orderId", "po-a1", "quantity", 25));
+        String intent = TrustedUser.confirm(console, "buyer-a", "po-a1", 25);
+        var result = call("buyer-a", "purchase_order.update", Map.of("orderId", "po-a1", "quantity", 25, "intentId", intent));
         assertFalse(result.path("result").path("isError").asBoolean());
         assertEquals(25, payload(result).path("data").path("quantity").asInt());
         assertEquals(before + 1, store.order("po-a1").version());

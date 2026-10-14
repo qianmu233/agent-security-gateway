@@ -11,6 +11,9 @@ public class PolicyService {
     public PolicyService(IdentityDirectory directory) { this.directory = directory; }
     public boolean allows(Authentication authentication, String tool, String tenant, String resource) {
         var identity = directory.resolve(authentication);
+        return allows(identity, tool, tenant, resource);
+    }
+    public boolean allows(IdentityDirectory.Identity identity, String tool, String tenant, String resource) {
         return identity != null && REGISTERED.contains(tool) && identity.permissions().contains(tool)
             && identity.tenant().equals(tenant) && identity.resources().contains(resource);
     }

@@ -8,6 +8,7 @@ import dev.p3.gateway.audit.AuditTrail;
 import dev.p3.gateway.erp.ErpService;
 import dev.p3.gateway.erp.ErpStore;
 import dev.p3.gateway.security.IdentityDirectory;
+import dev.p3.gateway.security.IntentRejectedException;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import jakarta.validation.Validator;
 import jakarta.validation.constraints.Max;
@@ -53,7 +54,11 @@ public class ToolGateway {
                 if (resource == null) throw new Rejected("FORBIDDEN");
                 data = service.read(resource);
             } else {
-                exactFields(arguments, Set.of("orderId", "quantity"));
+                if (arguments != null && arguments.containsKey("intentId"))
+                    exactFields(arguments, Set.of("orderId", "quantity", "intentId"));
+                else exactFields(arguments, Set.of("orderId", "quantity"));
+                String intentId = arguments.containsKey("intentId") ? string(arguments.get("intentId")) : null;
+                if (intentId != null && !intentId.matches("[A-Za-z0-9_-]{43}")) throw new Rejected("INTENT_INVALID");
                 Object quantity = arguments.get("quantity");
                 // No coercion from strings, floats, booleans, or oversized integers.
                 if (!(quantity instanceof Integer)) throw new Rejected("INVALID_ARGUMENTS");
@@ -61,12 +66,14 @@ public class ToolGateway {
                 validate(input);
                 var resource = store.order(input.orderId());
                 if (resource == null) throw new Rejected("FORBIDDEN");
-                data = service.update(resource, input.quantity());
+                data = service.update(resource, input.quantity(), intentId);
             }
         } catch (Rejected ex) {
             reason = ex.code;
         } catch (AccessDeniedException ex) {
             reason = "FORBIDDEN";
+        } catch (IntentRejectedException ex) {
+            reason = ex.code();
         } catch (RuntimeException ex) {
             // Never expose exception messages, credentials, or raw arguments.
             reason = "INTERNAL_ERROR";

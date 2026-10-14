@@ -20,7 +20,12 @@
 | 未注册工具预检、避免恶意名称回显 | P3 McpBoundaryFilter；协议与正常 dispatch 仍由 SDK 完成 | 是，薄边界过滤器 |
 | 受控模拟写、version 原子递增、拒绝无副作用 | P3 ErpStore/ErpService | 是 |
 | 原因码、请求 UUID、有界脱敏审计 | P3 AuditTrail/ToolGateway | 是 |
-| 11 项真实 HTTP 集成测试及打包 JAR 演示 | P3 JUnit/Failsafe 与 PowerShell 脚本 | 是 |
+| 19 项真实 HTTP 集成测试及打包 JAR 演示 | P3 JUnit/Failsafe 与 PowerShell；保留 Phase 1 的 11 项 | 是 |
+| 不可信库存备注与标签 | P3 ERP 模拟字段；标签不作为授权属性 | 是，Phase 2 |
+| 确定性 Mock Agent 间接注入驱动 | 仅测试代码，读取和后续调用均走真实 MCP HTTP | 是，Phase 2；不是模型攻击成功率 |
+| 可信写意图 | 本地控制台确认、60 秒随机授权、身份/工具/租户/资源/数量绑定、单次消费 | 是，Phase 2 |
+| 意图校验与原子模拟写 | P3 WriteIntentService / ErpService | 是，Phase 2；非分布式事务 |
+| 认证、权限、意图失败区分 | P3 AuthenticationAuditFilter 与 INTENT_* 原因码 | 是，Phase 2 |
 | OAuth2 授权服务器、客户端安全、天气工具等 | 上游仓库其他功能 | 未作为个人成果；未引入 P3 |
 
 P3 不复制上游安全库源码，仅通过 Maven 依赖复用。`SecurityConfiguration.java` 参考上游 API Key 示例的配置模式，保留上游版权与 Apache-2.0 头。个人修改包括环境凭据、失败即阻止启动、固定身份、无状态认证、只保护 MCP API、严格凭据头和脱敏预检，详见根目录 NOTICE 和 LICENSE。
@@ -28,3 +33,5 @@ P3 不复制上游安全库源码，仅通过 Maven 依赖复用。`SecurityConf
 上游演示凭据仅存在于参考仓库隔离运行中，没有进入 P3 的配置、测试或文档。P3 测试凭据由脚本随机生成后仅通过环境继承。
 
 个人工程价值在于把现有认证组件接入真实 MCP 请求链，在虚拟 ERP 业务执行前实现最小可信授权，并提供可以复现的安全证据。不存在“自研 MCP 协议/API Key 算法/完整安全框架”的成果声明。
+
+Phase 2 扩展原项目，没有新增主参考或独立项目。意图签发不是 MCP 工具，也没有 REST 审批接口。正常业务通过相同 ToolGateway / PolicyService / ErpService 执行；正式 JAR 不包含 Mock Agent 或测试授权助手，也没有无安全控制的执行器或绕过开关。
