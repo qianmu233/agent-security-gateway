@@ -1,10 +1,12 @@
 # 企业级 Agent 工具调用安全网关
 
-Agent Tool Security Gateway · P3 Phase 2 · 应用版本 0.2.0
+Agent Tool Security Gateway · P3 简历 MVP · Phase 1–3 完成 · 应用版本 0.2.0
 
 可运行的 Java 后端安全项目：真实 MCP HTTP 入口认证，工具执行前检查权限、租户、资源和本次可信写操作意图。虚拟 ERP 库存备注作为不可信数据返回；即使 Agent 被备注诱导提出危险调用，也不能自行获得执行权限或签发写操作授权。
 
 只有两个虚拟 ERP 工具、三个固定身份和最小审计。业务数据在内存中，重启恢复初始状态。没有真实 LLM、数据库、采购操作或前端。
+
+项目背景：Agent 即使完成了 API Key 认证，也可能被 ERP 工具返回的恶意备注诱导，执行当前任务未批准的操作。因此执行侧同时需要可信身份、业务权限和本次写操作授权，并以真实 MCP 请求验证拒绝无业务副作用。
 
 ## 技术与来源
 
@@ -12,24 +14,43 @@ Java 17 / Spring Boot 3.5.4 / Spring AI 1.1.2 / MCP SDK 0.15.0 / Spring Security
 
 唯一 GitHub 主参考：[mcp-security v0.0.6](https://github.com/spring-ai-community/mcp-security/tree/25b9ef1ba9d22bedb1100c85056baee6e9ce0a18)，Commit `25b9ef1ba9d22bedb1100c85056baee6e9ce0a18`。认证过滤器、Provider、BCrypt 校验和凭据仓库复用上游；MCP 协议由 Spring AI / SDK 实现。个人新增内容见 [工作边界](docs/upstream-vs-custom.md)，许可与配置借鉴见 LICENSE、NOTICE。
 
-## 构建与自动演示
+## 一键完整验收
 
 项目目录下执行 PowerShell，按本机实际 JDK 17 路径调整：
 
 ```powershell
-./scripts/verify.ps1 -JavaHome 'C:\Users\R9000P\.jdks\ms-17.0.16'
-./scripts/demo.ps1 -JavaHome 'C:\Users\R9000P\.jdks\ms-17.0.16'
+./scripts/acceptance.ps1 -JavaHome 'C:\Users\R9000P\.jdks\ms-17.0.16'
 ```
 
-verify 运行完整 Maven verify：Phase 1 的 11 项 + Phase 2 的 8 项，合计 **19 项真实 HTTP 集成测试**。凭据由脚本临时随机生成，只通过进程环境传递，结束后恢复原环境，不保存密钥。
+一个命令运行完整 Maven verify、24 场景评测和独立 JAR 安全演示。JUnit 共 **20 项**：Phase 1 的 11 项、Phase 2 的 8 项、一个执行 24 场景的表驱动评测入口。场景数与 JUnit 测试数分别统计。凭据临时随机生成，只通过环境传递，结束时恢复原环境，不保存密钥。
 
 demo 启动独立 JAR，通过受控 stdin 模拟用户在本地控制台确认，再经 MCP HTTP 合法修改订单，同时验证没有意图、重放、低权限、跨租户等拒绝；结束时停止自己的进程。intentId 仅在内存管道中读取，演示日志与证据不保存它。
 
 默认 Maven 缓存 `.local/repository` 被 Git 忽略。本机可复用开发缓存：
 
 ```powershell
-./scripts/verify.ps1 -MavenRepository 'E:\codeplace\llm-agent\.p3-cache\repository'
+./scripts/acceptance.ps1 -MavenRepository 'E:\codeplace\llm-agent\.p3-cache\repository'
 ```
+
+仅重新测试可使用 verify.ps1，已有 JAR 的演示可使用 demo.ps1。评测自动写入 `target/security-evaluation/results.json`、`results.csv`、`report.md`。本次交付的脱敏结果快照在 [docs/evaluation](docs/evaluation/report.md)，重新运行不会覆盖已提交的历史快照。
+
+## 安全架构和执行链
+
+```mermaid
+flowchart LR
+    Agent[Agent / MCP 客户端] --> Auth[上游 API Key 认证]
+    Auth --> MCP[Spring AI MCP tools/call]
+    MCP --> Gateway[ToolGateway 参数与注册检查]
+    Gateway --> Policy[PreAuthorize + 权限/租户/资源策略]
+    Policy --> Read[已授权库存读取]
+    Read --> Data[不可信备注数据]
+    Policy --> Intent[可信意图检查与单次消费]
+    Operator[本地可信操作员 CONFIRM] --> Grant[60 秒授权签发]
+    Grant --> Intent
+    Intent --> Write[内存采购单修改]
+```
+
+注册工具、权限、租户与资源联合策略默认拒绝。角色由服务端定义并配置权限，实际判定依据明确 permission 与资源范围；没有接受 Agent role 的授权路径。写操作校验、消费和实际内存更新共享锁，避免检查后释放锁再写入的窗口。失败只返回固定原因码，审计不记录秘密。
 
 ## 启动与 API Key
 
@@ -59,7 +80,7 @@ HTTP 入口 `http://127.0.0.1:8093/mcp`，P3_PORT 可改变端口。协议 STATE
 
 ## 可信写操作意图
 
-长期写权限只说明用户具备修改资格，不能证明用户批准了本次修改。显式启用的**本地服务端控制台**是唯一签发渠道，信任拥有服务器 stdin 的本地操作员代表用户提交明确授权；它与 MCP Agent 客户端分开。默认控制台关闭，关闭时仍可读库存，但不能签发新的写意图。
+长期写权限只说明用户具备修改资格。显式启用的**本地服务端控制台**是唯一签发渠道，信任拥有服务器 stdin 的本地操作员批准精确操作；这没有验证真实终端用户同意。它与 MCP Agent 客户端分开，默认关闭；关闭时仍可读库存，但不能签发新的写意图。
 
 在服务器终端输入：
 
@@ -100,9 +121,15 @@ CONFIRM
 
 **模拟 planner 被诱导成功，未经授权的执行被服务端阻断。** 这是确定性工程验收，不是真实模型攻击成功率，也没有通用 Prompt Injection 检测器。即使调用来自恶意备注，已经获批的同用户、同目标、同参数操作仍可能在有效期内执行；本阶段验证的是执行授权边界。
 
+评测分为 8 条合法、12 条攻击/越权、4 条边界。逐条记录真实 MCP 响应、handler 进入、受保护服务进入、实际业务读/写次数和全部订单状态变化；不把 HTTP 200、模型提议或 handler 被调用当成业务执行成功。参数只保留名称与类型，订单状态用别名、版本及每次运行加盐指纹表示。延迟统计仅计 24 个主请求，排除 Mock 准备读和并发辅助请求，是本地小样本，非性能基准。
+
+最终实测指标、样本表和两个写安全不变量的证据见 [Phase 3 验收](docs/phase3-verification.md) 与 [结构化 JSON](docs/evaluation/results.json)。20 项 JUnit、24 场景与独立 JAR 演示全部通过。
+
 - [Phase 1 历史验收](docs/phase1-verification.md)
 - [Phase 2 实际验收](docs/phase2-verification.md)
+- [Phase 3 实际指标与边界](docs/phase3-verification.md)
+- [可用于简历的真实亮点](docs/resume-highlights.md)
 - [源码、原理与面试复盘](docs/project-review.md)
 - [上游与个人工作边界](docs/upstream-vs-custom.md)
 
-授权和数据都在单 JVM 内存中；无分布式事务、持久审计、真实用户确认 UI、密钥管理平台或真实模型实验。Phase 2 完成后停止，Phase 3 尚未开发。
+授权和数据都在单 JVM 内存中；无分布式事务、持久审计、真实用户确认 UI、密钥管理平台或真实模型实验。API Key 每请求进行 BCrypt 验证，尚无限流。当前采用 last-write-wins，版本号用于观察变化，没有乐观锁前置条件。角色、资源范围和归属固定，异步上下文传播及动态权限变更不在当前证据范围内。P3 Phase 1–3 完成后停止，等待最终审核。

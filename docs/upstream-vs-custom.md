@@ -20,12 +20,16 @@
 | 未注册工具预检、避免恶意名称回显 | P3 McpBoundaryFilter；协议与正常 dispatch 仍由 SDK 完成 | 是，薄边界过滤器 |
 | 受控模拟写、version 原子递增、拒绝无副作用 | P3 ErpStore/ErpService | 是 |
 | 原因码、请求 UUID、有界脱敏审计 | P3 AuditTrail/ToolGateway | 是 |
-| 19 项真实 HTTP 集成测试及打包 JAR 演示 | P3 JUnit/Failsafe 与 PowerShell；保留 Phase 1 的 11 项 | 是 |
+| 20 项真实 HTTP JUnit 及独立 JAR 演示 | 保留 Phase 1/2 的 19 项，新增一个 24 场景评测入口 | 是 |
 | 不可信库存备注与标签 | P3 ERP 模拟字段；标签不作为授权属性 | 是，Phase 2 |
 | 确定性 Mock Agent 间接注入驱动 | 仅测试代码，读取和后续调用均走真实 MCP HTTP | 是，Phase 2；不是模型攻击成功率 |
 | 可信写意图 | 本地控制台确认、60 秒随机授权、身份/工具/租户/资源/数量绑定、单次消费 | 是，Phase 2 |
 | 意图校验与原子模拟写 | P3 WriteIntentService / ErpService | 是，Phase 2；非分布式事务 |
 | 认证、权限、意图失败区分 | P3 AuthenticationAuditFilter 与 INTENT_* 原因码 | 是，Phase 2 |
+| 24 场景和实测安全指标 | P3 表驱动数据、实际 MCP 响应及业务执行/状态观测 | 是，Phase 3 |
+| JSON/CSV/Markdown 脱敏报告 | P3 EvaluationReport；指标根据真实行数据计算 | 是，Phase 3 |
+| 并发写窗口验收 | 测试侧暂停更新，以两个真实 HTTP 请求验证单次消费临界区 | 是，Phase 3；不是分布式压力测试 |
+| 一键完整验收与简历文档 | P3 acceptance.ps1、验收与来源说明 | 是，Phase 3 |
 | OAuth2 授权服务器、客户端安全、天气工具等 | 上游仓库其他功能 | 未作为个人成果；未引入 P3 |
 
 P3 不复制上游安全库源码，仅通过 Maven 依赖复用。`SecurityConfiguration.java` 参考上游 API Key 示例的配置模式，保留上游版权与 Apache-2.0 头。个人修改包括环境凭据、失败即阻止启动、固定身份、无状态认证、只保护 MCP API、严格凭据头和脱敏预检，详见根目录 NOTICE 和 LICENSE。
@@ -35,3 +39,5 @@ P3 不复制上游安全库源码，仅通过 Maven 依赖复用。`SecurityConf
 个人工程价值在于把现有认证组件接入真实 MCP 请求链，在虚拟 ERP 业务执行前实现最小可信授权，并提供可以复现的安全证据。不存在“自研 MCP 协议/API Key 算法/完整安全框架”的成果声明。
 
 Phase 2 扩展原项目，没有新增主参考或独立项目。意图签发不是 MCP 工具，也没有 REST 审批接口。正常业务通过相同 ToolGateway / PolicyService / ErpService 执行；正式 JAR 不包含 Mock Agent 或测试授权助手，也没有无安全控制的执行器或绕过开关。
+
+Phase 3 仅增加测试组织、观测、报告与交付文档，未新增正式业务模块或重写安全组件。Mockito spy、延迟计时和场景载荷只在测试中，保留真实业务方法与策略；报告不输出 API Key、有效意图或敏感原始参数。指标是本地确定性样本结果，不能包装为真实第三方 LLM 安全表现。本地控制台仅代表可信操作员确认。

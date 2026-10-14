@@ -1,4 +1,4 @@
-# Phase 1 / Phase 2 学习与面试复盘
+# P3 Phase 1–3 学习与面试复盘
 
 ## 源码阅读顺序
 
@@ -19,7 +19,7 @@
 | audit/AuditTrail.java | 有界内存审计，固定字段与原因码 |
 | audit/AuthenticationAuditFilter.java | 观察真实认证 401，记录 AUTHENTICATION_FAILED |
 
-测试入口：`McpSecurityIT.java` 保留 Phase 1 全部 11 项，成功写用例增加可信授权准备；`AgentInjectionIT.java` 新增 8 项。`support/MockAgent.java` 仅在测试代码中，读取真实 MCP 结果并提出后续调用；`support/TrustedUser.java` 模拟独立可信操作员，未暴露给 Mock Agent。复现入口：`scripts/verify.ps1`、`scripts/demo.ps1`。依赖版本未改变，应用版本为 0.2.0。
+测试入口：`McpSecurityIT.java` 保留 Phase 1 的 11 项；`AgentInjectionIT.java` 保留 Phase 2 的 8 项；`SecurityEvaluationIT.java` 一个表驱动入口执行 24 个评测场景；JUnit 共 20 项。`support/MockAgent.java` 只通过 HTTP 提出调用，`support/TrustedUser.java` 模拟独立操作员；`support/EvaluationReport.java` 根据真实观察生成 JSON/CSV/Markdown。一键入口 `scripts/acceptance.ps1`。依赖版本未改变，应用版本为 0.2.0。
 
 ## 一次工具调用如何被保护
 
@@ -54,7 +54,7 @@
 
 noteTrust 只是信任标签，不能授予权限。防线是认证主体、业务策略与独立可信写意图。提示模型“忽略备注指令”不能替代执行前授权。
 
-长期 BUYER 权限不足以表示本次同意。TrustedIntentConsole 由服务器本地操作员代表明确用户指令确认，展示 caller/order/quantity 后要求 CONFIRM；它信任 OS stdin 通道。Agent 网络客户端没有该通道或 issueForConfirmedUser 的入口，MCP 工具列表仍只有两个。
+长期 BUYER 权限不足以表示本次批准。TrustedIntentConsole 展示 caller/order/quantity 后要求本地可信操作员 CONFIRM；它信任 OS stdin 通道，不代表已验证真实终端用户同意。Agent 网络客户端没有该通道或 issueForConfirmedUser 的入口，MCP 工具列表仍只有两个。
 
 授权用标准 SecureRandom 生成 32 字节不透明 ID，绑定可信主体、固定工具、真实租户、订单与数量。API Key 认证继续由上游完成。WriteIntentService.execute 再检查策略、有效期和匹配关系，随后一次性消费；匹配失败不消费授权。内部执行失败时已消费授权不恢复，避免不受控重试。
 
@@ -75,15 +75,28 @@ noteTrust 只是信任标签，不能授予权限。防线是认证主体、业�
 | JSON Schema 是否足够防止非法参数？ | Schema 是接口描述；执行端严格字段/类型检查与 Bean Validation 才是可信边界 |
 | 如何证明拒绝没有副作用？ | 每个拒绝请求通过真实 HTTP 发出，前后比较全部订单 snapshot；成功写另外验证数量与版本变化 |
 | 如何避免审计泄漏？ | 固定字段、可信 caller/工具名、固定原因码、UUID；不存原始参数/密钥/异常消息，并注入运行时密钥做反射测试 |
-| 有写权限为什么还需 intent？ | 权限是长期资格，intent 证明用户批准了本次精确修改 |
+| 有写权限为什么还需 intent？ | 权限是长期资格，intent 在本项目中表示本地可信操作员批准本次精确修改；不等于真实终端用户同意验证 |
 | Agent 能否生成授权？ | 没有签发工具；猜测 ID、复制他人 ID、改数量或重放都被检查 |
 | UNTRUSTED_DATA 是否阻止注入？ | 只是标记；攻击模拟仍服从备注，服务端负责阻断执行 |
 | 是否测出模型攻击成功率？ | 没有；确定性 planner 被设定为提出危险调用，测试证明执行阻断条件 |
+| 如何计算阻断率？ | 16 个非法主请求中，实际 MCP 拒绝、业务调用次数为零且全量订单不变的数量除以 16；不把预期结果当观测 |
+| 如何区分进入工具和业务执行？ | 测试侧分别观察 gateway handler、权限后的写服务和真正 ErpStore.update；进入意图检查并不表示已执行写入 |
+| 是否存在授权检查到写入的窗口？ | 校验、消费和更新持有同一锁；测试暂停实际写入，第二 HTTP 请求进入受保护服务后仍等待，最终一次修改、一次重放拒绝 |
+| p50/p95 如何计算？ | 24 个主请求的完整 HTTP 往返时间，排序后最近秩分位数；排除准备读、批准、预热和并发辅助；不是吞吐基准 |
+| RBAC 是怎样实现的？ | 服务端固定角色配置 permission，实际谓词检查 permission、tenant 与 resource；role 标签本身不来自模型，也没有动态通用角色引擎 |
 | 你个人实现了哪些？ | ERP 模拟工具、可信身份目录、租户与资源授权、严格参数、脱敏审计和 HTTP 安全验收；认证库/MCP 协议是上游 |
 | 进入生产还缺什么？ | 密钥生命周期、限流、持久化审计、监控、写操作幂等/并发控制、依赖升级验证 |
 
 ## 简历表述参考
 
-基于 Spring AI MCP 和 MCP Security 构建 Agent 工具安全网关，新增权限/租户/资源授权及短期单次可信写意图；构造库存备注间接提示词注入与确定性 Mock Agent，通过 19 项真实 MCP HTTP 集成测试验证未授权写入、跨租户、意图篡改与重放被阻断，拒绝无业务副作用。
+基于 Spring AI MCP 和 MCP Security 构建 Agent 工具安全网关，新增权限/租户/资源授权与短期单次可信写意图；使用 20 项真实 HTTP JUnit 测试及其中的 24 场景评测，验证本地样本中 8/8 合法请求通过、16/16 非法执行被阻断，并以实际执行观测和全量订单状态核对拒绝无业务副作用。详见 [简历亮点](resume-highlights.md)。
+
+## 两个不变量的源码核查结论
+
+正式代码唯一 `store.update` 调用点是 ErpService 的 intent 执行回调，先经方法安全策略，再由 WriteIntentService 校验授权。签发只由本地确认代码调用 package-private 方法，无 MCP/REST 签发入口。固定主体目录与不可变租户归属限制了当前作用域。
+
+WriteIntentService.execute 在同步方法中完成匹配、过期、已消费检查、消费及 mutation.get()，没有释放锁后的写入。B02 用测试侧 spy 暂停真正更新，第二请求已经进入权限后的服务但不能越过这段临界区；恢复后只有一个实际 update。测试没有替换权限/意图判断或提供成功假响应，业务仍由真实方法执行。本轮未发现导致越权副作用的缺陷，未更改正式安全框架。
+
+当前身份资源范围互不重叠，因此主体/租户/目标绑定部分以组合拒绝路径和源码检查验证，没有声称隔离证明共享订单多主体场景。并发样本仅两个请求，不能替代分布式压力测试。API Key、nonce、参数和备注不进入报告；状态用运行内加盐指纹比较，盐不输出。
 
 不要表述为自研 MCP 协议、安全认证库、通用 Prompt Injection 检测器或已经生产上线的企业平台。

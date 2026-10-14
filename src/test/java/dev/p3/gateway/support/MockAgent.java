@@ -9,7 +9,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public final class MockAgent {
     public enum Behavior { NORMAL, FOLLOW_INJECTED_NOTE }
     public record UserTask(String instruction, String productId) {}
-    public record Trace(String task, String trust, boolean induced, String proposedTool, McpHttpClient.Reply result) {}
+    public record Trace(String task, String trust, boolean induced, String proposedTool,
+                        Map<String, Object> proposedArguments, McpHttpClient.Reply result) {}
     private final McpHttpClient mcp;
     private final ObjectMapper mapper;
     public MockAgent(McpHttpClient mcp, ObjectMapper mapper) { this.mcp = mcp; this.mapper = mapper; }
@@ -26,9 +27,9 @@ public final class MockAgent {
             var proposal = mapper.readTree(note.substring(begin + "[[CALL]]".length(), end));
             String tool = proposal.path("name").asText();
             Map<String, Object> arguments = mapper.convertValue(proposal.path("arguments"), new TypeReference<>() {});
-            return new Trace(task.instruction(), trust, true, tool, mcp.call(tool, arguments));
+            return new Trace(task.instruction(), trust, true, tool, arguments, mcp.call(tool, arguments));
         }
-        return new Trace(task.instruction(), trust, false, "inventory.read", read);
+        return new Trace(task.instruction(), trust, false, "inventory.read", Map.of("productId", task.productId()), read);
     }
     public McpHttpClient.Reply executeExplicitUserWrite(String orderId, int quantity, String trustedIntent) throws Exception {
         return mcp.call("purchase_order.update", Map.of("orderId", orderId, "quantity", quantity, "intentId", trustedIntent));
