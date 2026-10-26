@@ -2,6 +2,8 @@
 
 验收日期：2026-10-14，Asia/Shanghai。范围仅 P3 Phase 1。
 
+2026-10-26公开准备说明：下表JDK路径中的`%USERPROFILE%`仅用于脱敏展示当时的Windows用户目录，原始执行使用本机实际绝对路径；未改变JDK版本、执行结果或历史Git提交。
+
 ## 环境与版本
 
 | 项目 | 实测值 |
@@ -9,7 +11,7 @@
 | 系统 | Windows 11 amd64 / PowerShell |
 | 工作目录 | E:\codeplace\llm-agent\agent-security-gateway |
 | Java | Microsoft OpenJDK 17.0.16+8-LTS，真实 JDK 17 |
-| JDK 路径 | C:\Users\R9000P\.jdks\ms-17.0.16 |
+| JDK 路径 | %USERPROFILE%\.jdks\ms-17.0.16（用户目录已脱敏） |
 | Maven | 3.9.1 |
 | Git | 2.54.0.windows.1 |
 | Spring Boot / Security | 3.5.4 / 6.5.2 |

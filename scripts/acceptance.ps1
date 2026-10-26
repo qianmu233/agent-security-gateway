@@ -1,4 +1,4 @@
-param([string]$JavaHome = 'C:\Users\R9000P\.jdks\ms-17.0.16', [string]$MavenRepository = '', [int]$Port = 18093)
+param([string]$JavaHome = $env:JAVA_HOME, [string]$MavenRepository = '', [int]$Port = 18093)
 $ErrorActionPreference = 'Stop'
 & (Join-Path $PSScriptRoot 'verify.ps1') -JavaHome $JavaHome -MavenRepository $MavenRepository
 if ($LASTEXITCODE -ne 0) { throw 'Full Maven verification failed' }

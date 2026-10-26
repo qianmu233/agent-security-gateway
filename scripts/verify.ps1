@@ -1,6 +1,7 @@
-param([string]$JavaHome = 'C:\Users\R9000P\.jdks\ms-17.0.16', [string]$MavenRepository = '')
+param([string]$JavaHome = $env:JAVA_HOME, [string]$MavenRepository = '')
 $ErrorActionPreference = 'Stop'
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+if ([string]::IsNullOrWhiteSpace($JavaHome)) { throw 'Set JAVA_HOME to JDK 17 or supply -JavaHome' }
 if (!(Test-Path -LiteralPath (Join-Path $JavaHome 'bin/java.exe'))) { throw 'Provide a real JDK 17 via -JavaHome' }
 if (!(Select-String -LiteralPath (Join-Path $JavaHome 'release') -Pattern '^JAVA_VERSION="17[."]' -Quiet)) { throw 'This verification requires a real JDK 17' }
 if ([string]::IsNullOrWhiteSpace($MavenRepository)) { $MavenRepository = Join-Path $root '.local/repository' }

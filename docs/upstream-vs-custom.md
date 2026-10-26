@@ -1,5 +1,17 @@
 # 上游已有能力与个人新增工作
 
+> **2026-10-26结项索引：** 原来源、许可证和贡献归属保持不变，以下“真实D未执行”等描述是对应阶段历史。后续新增批量驱动及离线审计故障回归，并完成用户执行的真实D/B/C：D危险写入授权分支NOT_EXERCISED，B/C服务端拒绝PASS，不能算通用抗注入率。最终原件、统计、证据局限和项目增量见[最终D/B/C审计](FINAL_REAL_LLM_DBC_AUDIT.md)。本轮只归档文档，既有Java策略和开源组件不冒充新增实现。
+
+## 2026-10-23 Python跨语言增量
+
+下表原Java来源归属保留。本轮新增python-agent/，并非重写认证或MCP协议：官方modelcontextprotocol/python-sdk提供Streamable HTTP、初始化与会话；LangGraph提供StateGraph执行；LangChain提供消息及原生Tool Calling适配。依赖许可证各自适用，项目保留Apache-2.0和原NOTICE，不分发依赖源码或模型权重。
+
+本轮P3增量为decide/tool/finish有界图、模型工具别名与严格契约、受控身份/私有精确授权绑定、isError与超时错误转换、收据约束输出、仅测试Java可信stdin夹具、13项真实跨进程集成和一键验收。Java生产安全代码及原测试没有修改，原Java业务策略/写意图不算本轮新增。采用AI辅助开发，不声称上游框架或全部代码均个人手写。
+
+原跨语言阶段Python34项与原Java20项/24场景通过；后续最小修复将Python基线补齐为51项，另完成一次真实DeepSeek合法库存A。真实攻击D未执行，不能把Fake驱动的危险调用阻断统计包装为真实模型抗注入率。版本、命令、历史失败及个人增量详见[专项报告](python-agent-verification.md)，单次真实结果与证据限制见[A终审](FINAL_REAL_LLM_A_AUDIT.md)。以下“唯一GitHub参考”指原Java主参考项目，Python框架/SDK是明确列出的依赖来源，不是本项目原创。
+
+## 原Java来源与阶段记录
+
 唯一 GitHub 参考：[spring-ai-community/mcp-security](https://github.com/spring-ai-community/mcp-security/tree/25b9ef1ba9d22bedb1100c85056baee6e9ce0a18)。固定 `v0.0.6` / `25b9ef1ba9d22bedb1100c85056baee6e9ce0a18`，Apache-2.0。
 
 重点阅读 `samples/sample-mcp-server-api-key`，并参考同仓库 `sample-mcp-server-secured-tools` 的方法授权示例。没有引入其他 GitHub 主项目。

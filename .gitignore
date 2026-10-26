@@ -6,3 +6,9 @@ target/
 .vscode/
 *.iml
 .local/
+python-agent/.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.py[cod]
+*.egg-info/

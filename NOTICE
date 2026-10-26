@@ -17,3 +17,13 @@ API-key parsing, BCrypt authentication and the in-memory credential repository
 are provided by the upstream dependency, not original P3 implementations.
 MCP protocol and HTTP transport are provided by Spring AI / the MCP Java SDK.
 See docs/upstream-vs-custom.md for the full boundary of original project work.
+
+Python integration addition (2026-10-23):
+The official modelcontextprotocol/python-sdk provides MCP client protocol and
+Streamable HTTP; LangGraph provides StateGraph execution; LangChain and
+langchain-openai provide message/tool-calling/model adapters. Their own licenses
+apply to those dependencies; no dependency source or model weights are vendored.
+The new bounded Agent, contracts, controlled credential/grant binding, error
+conversion and cross-language fixtures/tests are P3 project additions, with AI
+assistance. Existing Java authentication attribution and Apache-2.0 notices are
+unchanged. See python-agent/README.md and docs/python-agent-verification.md.

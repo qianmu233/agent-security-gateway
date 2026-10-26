@@ -1,5 +1,15 @@
 # P3 简历描述与真实技术亮点
 
+## 当前推荐口径（2026-10-23）
+
+**基于LangGraph、MCP与Spring Security的Agent工具调用安全系统。** 在既有Java授权执行点上新增Python有界Agent，经官方MCP SDK真实调用Java工具；离线基线51项Python测试（含14项独立Java集成）、原20项JUnit/24场景通过。固定身份、越权拒绝、写意图、重放与超时边界通过确定性测试；另完成一次真实DeepSeek公开合成A任务，2次模型HTTP、1次MCP库存读取，合法收据与Java审计关联，订单未改变。
+
+真实LangGraph、MCP传输及单次真实模型合法读取已验证；真实提示注入D、真实模型写入/越权行为及多次稳定性未验收。不要写“真实模型提示注入防御率100%”“生产级可靠”或将51/20/24及真实A重复累计为模型任务数。新增Python图/契约/适配和跨语言测试是本轮增量，Java安全机制是既有P3成果，MCP/Spring Security/LangGraph机制由上游依赖提供。面试说明见[P3_INTERVIEW_GUIDE](../P3_INTERVIEW_GUIDE.md)，脱敏原件、实际usage和复核限制见[真实A终审](FINAL_REAL_LLM_A_AUDIT.md)。
+
+可直接用于实习简历：在Spring Security/MCP网关上集成Python LangGraph Agent，使用官方MCP SDK完成跨语言Tool Calling；通过RBAC、租户/资源授权及60秒单次写意图约束业务副作用。建立51项Python与20项Java自动化基线及24个安全场景，另完成真实DeepSeek合法库存读取闭环，以收据、审计requestId和订单快照核验结果。攻击阻断结论来自确定性样本，不宣称真实模型通用抗注入率。
+
+## 以下保留原Java阶段描述与指标
+
 项目：企业级 Agent 工具调用安全网关（Agent Tool Security Gateway）。Java 17、Spring Boot、Spring Security、Spring AI MCP、MCP Security、Bean Validation、JUnit/Failsafe。
 
 ## Java 后端安全版本

@@ -1,6 +1,12 @@
 # Agent Tool Security Gateway
 
-基于 Java、Spring Security 与 MCP HTTP 的 Agent 工具调用安全网关，在工具执行业务操作前校验可信身份、权限、租户、资源与一次性写操作意图。
+**2026-10-26结项归档：** 历史真实DeepSeek合法A通过；另一次真实D/B/C批次完成：D备注进入模型上下文和HTTP请求，未观察到危险写工具提议，危险写入授权分支NOT_EXERCISED；B/C分别由Java返回FORBIDDEN、INTENT_REQUIRED，均SERVER_DENIED / PASS。该批次4次模型HTTP、3次MCP、2521总Token，按指定单价估算USD0.0009912，实际账单未知。订单数量/版本不变，资源关闭检查通过。已有Python39+51项离线测试与回归证据，不当作真实模型任务数；本次纯文档归档未重跑测试或实验。完整事实、原件摘要与证据边界见[最终真实D/B/C审计](docs/FINAL_REAL_LLM_DBC_AUDIT.md)。P3停止功能开发和实验，转入简历与面试准备。
+
+以下2026-10-23状态及测试数字保留为历史阶段记录；“真实D未验收/仅A”等旧范围由上述最终审计补充，不代表D危险写入分支已经通过，也不代表生产可靠性验收。
+
+基于 LangGraph、MCP 与 Spring Security 的 Agent 工具调用安全系统：Python Agent 经官方MCP客户端调用既有Java安全网关，在工具执行业务操作前校验可信身份、权限、租户、资源与一次性写操作意图。
+
+**2026-10-23最终状态：** 真实LangGraph StateGraph和Python MCP SDK已集成；离线基线51项Python测试（含14项独立Java进程集成）、原Java20项JUnit、24场景及生产JAR演示通过。另经单独授权完成一次真实DeepSeek公开合成A：2次模型HTTP、1次库存读取，sku-a1库存120、Java审计匹配且订单不变。默认仍为Fake，真实提示注入D和其他真实模型安全行为未验收，不能把确定性测试数字当LLM防御率。Java生产安全源码未改；工程冻结、停止功能开发，未合并或推送。见[真实A终审及证据限制](docs/FINAL_REAL_LLM_A_AUDIT.md)、[Python启动与安全边界](python-agent/README.md)、[实际命令/历史失败](docs/python-agent-verification.md)、[面试指南](P3_INTERVIEW_GUIDE.md)。
 
 ## 解决的问题
 
@@ -14,16 +20,22 @@ Agent 可能被检索资料或 ERP 备注中的恶意指令诱导，提出超出
 - **60 秒单次 Trusted Write Intent**：绑定用户、工具、租户、订单与数量，检查过期、参数替换及重放。
 - 意图校验、消费与内存业务修改共享锁，验证并发使用同一授权最多成功一次。
 - 脱敏审计和确定性 Mock Agent 间接 Prompt Injection 测试。
+- Python LangGraph有界工具循环，固定身份、严格工具契约、拒绝收口、模型/工具次数与时限；工具结果不升级为System，凭据/Intent不进入模型上下文。
+- 官方Python MCP SDK完成initialize/list/call、认证头、错误语义及关闭；跨语言验证合法读取、越权、缺意图、强制攻击、正向/替换/过期/重放和超时。
 
 ## 技术栈
 
 Java 17、Spring Boot **3.5.4**、Spring AI **1.1.2**、Spring Security、MCP Security **0.0.6**、Bean Validation、JUnit 5、Maven。依赖版本见 [pom.xml](pom.xml)。MCP 协议与 HTTP Transport 由 Spring AI / MCP Java SDK 提供。
 
+Python **3.12**、LangGraph **1.2.16**、LangChain **1.4.7**、官方MCP Python SDK **1.30.0**；精确依赖见[Python锁文件](python-agent/requirements.lock)。langchain-mcp-adapters已核对兼容范围但未采用，模型协议由ChatOpenAI适配。
+
 ## 架构与调用链
 
 ```mermaid
 flowchart LR
-    CLIENT[Agent / MCP 客户端] --> AUTH[API Key 认证 / 可信主体]
+    TASK[合成用户任务] --> AGENT[Python LangGraph Agent]
+    AGENT --> CLIENT[官方 Python MCP SDK]
+    CLIENT --> AUTH[API Key 认证 / 可信主体]
     AUTH --> MCP[MCP HTTP]
     MCP --> GATEWAY[工具注册 / 参数校验]
     GATEWAY --> POLICY[权限 / 租户 / 资源策略]
@@ -109,7 +121,7 @@ java -jar target/agent-security-gateway-0.2.0.jar --debug=false --p3.intent-cons
 
 ## 已知限制
 
-单 JVM 内存原型，重启丢失授权、审计和业务修改；没有持久数据库、分布式审批、多实例协调、真实用户确认 UI 或密钥管理平台。权限和资源目录固定，无入口限流；订单采用 last-write-wins，没有乐观锁前置条件。已被批准的相同精确操作仍可能在有效期内执行，系统不判断模型意图或识别所有恶意文本，也未接入真实 LLM。
+单 JVM 内存原型，重启丢失授权、审计和业务修改；没有持久数据库、分布式审批、多实例协调、真实用户确认 UI 或密钥管理平台。权限和资源目录固定，无入口限流；订单采用 last-write-wins，没有乐观锁前置条件。已被批准的相同精确操作仍可能在有效期内执行，系统不判断模型意图或识别所有恶意文本。真实LLM仅完成单次合法库存A，语义安全、真实攻击、多次稳定性和生产可靠性仍未验收；输出收据约束不等于模型不会受骗。
 
 ## 来源、许可与文档
 
