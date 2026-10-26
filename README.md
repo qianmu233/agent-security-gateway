@@ -1,5 +1,7 @@
 # Agent Tool Security Gateway
 
+**Agent 工具调用安全授权网关**
+
 基于 LangGraph、MCP 与 Spring Security 的 Agent 工具调用安全网关。通过 Python Agent 与 Java MCP 服务协作，在业务工具真正执行前完成身份认证、权限校验、资源授权和高风险写操作验证。
 
 ## 项目介绍
