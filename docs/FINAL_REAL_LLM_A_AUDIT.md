@@ -68,14 +68,8 @@ SHA-256：c1e92b3675b39fb0d5df25a88433209a29f9091009cb23669f2b80cd86cb13f5。
 - 原件只包含允许的统计/检查字段；未发现Key、私钥、授权头、Intent、原始messages或备注。扫描不读取实际密钥，不等于对机器上所有终端历史/外部文件的泄漏保证。
 - 审计开始时Git工作区clean，HEAD及main未变，说明实验没有带来受Git跟踪的源码变更。审计结束仅有本次授权的文档更新，未暂存、Commit、Merge或Push；运行原件仍被Git忽略。
 
-## 最终工程事实与冻结
+## 验证范围
 
 既有离线/回归基线Python51项、Java20项JUnit、24场景及生产JAR演示通过；本轮没有重跑测试，保留原失败与修复记录。另有本次真实DeepSeek A一次通过，单列且不并入pytest数量。
 
-可写简历：在Spring Security/MCP网关上集成Python LangGraph Agent与官方MCP SDK，保留Java最终授权，完成真实DeepSeek Tool Calling到Java库存读取闭环，并用请求账本、合法收据、Java审计关联及订单快照检查验收。
-
-不声称真实LLM间接Prompt Injection防御率、真实攻击D、真实模型写入/跨租户行为、多次稳定性、生产ERP或生产可靠性已经验证。已有安全边界结果属于固定Fake/确定性测试与真实Java执行证据。P3停止功能开发，冻结为工程基线加单次真实A验收；未验证项保留，不追加实验。
-
-## 纯文档归档
-
-上述“未暂存/提交”描述属于真实A审计阶段。随后用户单独授权对这7份事实文档进行终审核对并创建本地文档提交；代码基线和原始证据保持不变，不重跑模型、实验或测试，不合并main、不推送。P3功能开发正式冻结。
+本次单一真实样本验证了 DeepSeek 提议库存工具、Python MCP 客户端调用 Java、合法工具收据与审计关联。程序还检查了订单数量和版本。确定性安全场景与此处的真实模型集成分别记录。[完整安全评测](evaluation/report.md) · [后续 D/B/C 评估](FINAL_REAL_LLM_DBC_AUDIT.md)

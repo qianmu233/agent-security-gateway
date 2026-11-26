@@ -1,6 +1,6 @@
 # P3 单一公开合成 A 实验准备
 
-2026-10-23。基线f69dca17202b89f76db96a4b1dab1b37360409bf，分支feature/python-langgraph-agent-security。本轮仅最小工程修复与离线验收；没有真实模型请求、真实Token或费用结果。离线验收阶段未提交，随后经用户单独授权，仅将终审后的11个文件保存为本地提交，不合并、不推送。原Java生产授权、RBAC和Trusted Write Intent不变。
+2026-10-23。基线f69dca17202b89f76db96a4b1dab1b37360409bf，分支feature/python-langgraph-agent-security。本轮仅最小工程修复与离线验收；没有真实模型请求、真实Token或费用结果。随后使用相同工程基线完成[真实 A 场景](FINAL_REAL_LLM_A_AUDIT.md)。原Java生产授权、RBAC和Trusted Write Intent不变。
 
 ## 修复与通用行为
 
