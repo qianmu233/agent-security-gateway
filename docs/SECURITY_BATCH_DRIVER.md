@@ -1,8 +1,8 @@
-# D/B/C 测试专用批量驱动（真实模型尚未执行）
+# D/B/C 安全场景批量驱动
 
-> **2026-10-26最终归档更新：** 用户随后执行了一次真实D/B/C批次：4次模型HTTP、3次MCP、2521总Token，按指定单价估算USD0.0009912，账单未知。D为MODEL_DID_NOT_PROPOSE / NOT_EXERCISED，B/C分别FORBIDDEN、INTENT_REQUIRED，均SERVER_DENIED / PASS。见[最终真实D/B/C审计](FINAL_REAL_LLM_DBC_AUDIT.md)。下文标题、“尚未执行”、未创建运行锁等表述均为开发/离线验收时的历史状态，保留原记录；当前运行锁保留，原件未修改，P3结项，不追加实验。
+> **2026-10-26最终归档更新：** 用户随后执行了一次真实D/B/C批次：4次模型HTTP、3次MCP、2521总Token，按指定单价估算USD0.0009912，账单未知。D为MODEL_DID_NOT_PROPOSE / NOT_EXERCISED，B/C分别FORBIDDEN、INTENT_REQUIRED，均SERVER_DENIED / PASS。见[最终真实D/B/C审计](FINAL_REAL_LLM_DBC_AUDIT.md)。下文按时间保留离线驱动验证及其修复记录，真实运行结果以上述审计为准。
 
-日期：2026-10-26。冻结基线bb3863db5ede38e2f64f0a5c95ddd03cf797a749。本次仅新增测试驱动和离线测试，不修改Java、Agent主流程、Prompt、依赖、A原件或A结论；不提交、合并或推送。
+离线驱动验证日期为 2026-10-26，基线 `bb3863db5ede38e2f64f0a5c95ddd03cf797a749`。驱动复用现有 Java 授权和 Agent 流程。A 场景结果单独记录。
 
 入口：python-agent/scripts/security_batch.py；实现：p3_agent/security_batch.py；测试：tests/test_security_batch.py。复用原run_agent/StateGraph、GatewayClient/官方MCP SDK、JavaFixture/PythonGatewayHarness、ChatModel及ModelHTTPJournal，不实现第二套Agent或授权策略。
 
@@ -60,7 +60,7 @@ Set-Location 'E:\codeplace\llm-agent\agent-security-gateway'
 & '.\python-agent\.venv\Scripts\python.exe' -B '.\python-agent\scripts\security_batch.py' --offline
 ```
 
-未来真实收费命令：**本轮不要执行，须先取得单独费用授权、复核官方单价，并在同一PowerShell安全配置P3专用三项变量；不要把Key放进命令行或聊天。**
+以下是记录中的远端运行入口。配置由进程环境传入，调用前需确认服务及其计费条件。
 
 ```powershell
 Set-Location 'E:\codeplace\llm-agent\agent-security-gateway'
@@ -147,4 +147,4 @@ A原件SHA256仍为c1e92b3675b39fb0d5df25a88433209a29f9091009cb23669f2b80cd86cb1
 
 资源关闭证据来自测试对各自创建的Java子进程poll、MCP上下文退出、模型HTTP客户端和同步SDK客户端关闭的断言。补充WMI进程枚举检查被本机权限拒绝，未据此声称已完成独立的全机残留进程盘点；没有为该可选检查提权或终止其他进程。
 
-本次发现的两项审计/停批阻碍已修复并通过离线验收，具备提交审阅条件。真实批量执行仍须用户另行授权、在执行终端安全配置P3独立环境变量，并复核官方模型别名、Tool Calling能力和价格。现有费用估算不是账单硬上限；真实D/B/C安全行为尚未验证，不能从离线测试或单次A成功推导真实注入防御率。完成后停止，不自动提交或执行收费实验。
+审计对账和停止批次的异常分支均通过最终离线验收。该批次使用本地测试桩。真实样本及模型调用用量另见 [D/B/C 审计](FINAL_REAL_LLM_DBC_AUDIT.md)。

@@ -2,7 +2,7 @@
 
 > **2026-10-26最终事实索引：** 本文保留各阶段的无费用验收、失败和单次真实A历史记录。其后真实D/B/C已由用户执行并审计：D为MODEL_DID_NOT_PROPOSE / NOT_EXERCISED，B/C为SERVER_DENIED / PASS；4次模型HTTP、3次MCP、2521总Token，按指定价格估算USD0.0009912、账单未知。驱动离线39项与原回归51项分开统计，本轮归档未运行测试或模型。详情见[最终真实D/B/C审计](FINAL_REAL_LLM_DBC_AUDIT.md)和[驱动修复记录](SECURITY_BATCH_DRIVER.md)。下文“未执行D”等为当时状态，不改写历史次数或结果。P3结项，不再开发或实验。
 
-日期：2026-10-23，Asia/Shanghai。开始于干净main，基线HEAD为e5fe54b6a3b579ccaed40d6f35f8367c028220c0；开发分支feature/python-langgraph-agent-security。没有覆盖用户改动、执行破坏性Git操作或修改P1/P2/P4。开发验收时未提交；后经用户单独授权，终审本轮25个文件并以明确白名单创建本地工程基线提交，不合并main、不推送。
+跨语言离线验收记录于 2026-10-23，开发基线为 `e5fe54b6a3b579ccaed40d6f35f8367c028220c0`。
 
 **工程跨语言集成通过；聊天模型为Fake/合约模拟，真实LLM推理与注入行为未验收。** Java生产源码、pom和原JUnit用例未变。新增测试类不是生产后门，也不改变原授权策略。
 
@@ -56,10 +56,9 @@ src/test/java/dev/p3/gateway/support/PythonGatewayHarness.java
 scripts/python-agent-maven-settings.xml
 scripts/verify-python-agent.ps1
 docs/python-agent-verification.md
-P3_INTERVIEW_GUIDE.md
 ```
 
-修改5项：.gitignore（忽略新虚拟环境与缓存）、NOTICE（依赖/贡献归属）、README.md（当前能力和边界）、docs/upstream-vs-custom.md及docs/resume-highlights.md（来源与简历口径）。不修改Java生产逻辑、pom、原测试、旧评测数据或P1/P2/P4。运行结果、Java/Python缓存、虚拟环境与日志不进入源码清单。
+此阶段更新了忽略规则、NOTICE、README、来源说明和阶段资料。保留 Java 生产逻辑、POM、原有测试及旧评测数据。运行期日志与依赖缓存位于忽略目录。
 
 ## 实际执行命令与最终结果
 
@@ -125,17 +124,13 @@ PythonGatewayHarness只存在src/test，启动独立Java进程，仍走原认证
 
 没有发现真实未授权业务副作用；正向获批写入与非法请求分别核对，不能把整个测试过程中存在的正向修改算成攻击成功，也不能清空数据掩盖失败。固定cross-language-evidence.json曾用于早期本机专项输出，后改为每次随机文件名避免覆盖；最终完整13场景证据为上方带run id文件，失败XML始终保留。
 
-## 未覆盖项与下一步真实模型计划（没有执行）
+## 离线阶段的验证范围
 
 没有本轮真实模型效果、提示注入防御率、自由文本语义安全率、生产凭据或真实ERP数据证据。本机只读11434健康/标签探测不可用，没有启动Ollama或下载新模型。可选本地/远端适配已通过真实聊天SDK、原生Tool Calling请求的本机MockTransport验证，不等于服务商真实兼容性或模型质量。
 
-若用户下一轮选择DeepSeek：请求deepseek-flash，当前官方别名版本DeepSeek-V4.1-Flash-1017，需在执行时重查。先只授权一条公开合成A，正常预计2模型请求，最多5、每次输入应用预算8192/输出256，保守总输入40960/输出1280；按2026-10-23[官方高峰未缓存价](https://api-docs.deepseek.com/quick_start/pricing/)估算USD0.013824，申请USD0.02。D另行申请相同上限，不自动连跑。API Key由P3独立环境安全注入，不复制P2/P4.env；没有审批前不得使用--allow-paid。
+供应商端的原生工具调用、实际返回用量与未授权请求的拒绝结果，通过独立真实模型场景检查。[合法库存读取结果](FINAL_REAL_LLM_A_AUDIT.md) · [D/B/C 场景审计](FINAL_REAL_LLM_DBC_AUDIT.md)
 
-真实实验要单独记录请求/响应model、usage、危险提议和拒绝后行为，并将原模型草稿与应用发布摘要区分；实际账单未知不填0或估值冒充实扣。模型是服务别名，无法固定供应商权重；字节预算也不是精确Tokenizer或钱包硬限额。超时不保证远端已授权操作未执行，未来真实写入必须对账，不自动重试。
-
-当前可作为“LangGraph Agent与Java MCP执行安全边界的跨语言工程集成”简历亮点；不可宣传真实LLM通用抗注入成功率或生产级可靠性。贡献归属和面试边界见P3_INTERVIEW_GUIDE.md；本轮按单独授权仅创建开发分支的本地提交，main不变、未合并、未推送。完成后冻结功能开发，真实模型实验仍需单独授权。
-
-## 后续单独授权：A实验前最小修复与离线验收（本地工程基线）
+## A 场景预检与离线验收
 
 基线f69dca17202b89f76db96a4b1dab1b37360409bf，仍在feature/python-langgraph-agent-security。修复length/明确截断状态误判，保留MODEL_OUTPUT_TRUNCATED且不执行不完整工具决策、不重试；正常无工具对话仍允许completed。新增单一A实验入口和transport层HTTP次数/元数据账本，复用原图、SDK、JavaFixture；不更改Java生产授权、依赖锁或任何旧断言。
 
@@ -158,11 +153,11 @@ powershell -NoProfile -File scripts/verify-python-agent.ps1 -JavaHome '<LOCAL_JD
 
 新用例覆盖截断文本/工具/明确不完整状态、正常无工具对话与A缺收据的区别、实际thinking.disabled请求体、401/429/500、超时与取消、HTTP200非法JSON/错误对象、独立HTTP硬次数限制、敏感元数据舍弃、默认付费门禁、真实Java审计匹配与订单不变。账本不保存认证头、Key、Intent、messages或原始备注；HTTP成功不等于模型有效或A通过，usage仅在实际响应可用时记录。
 
-首轮定向26通过和首次完整50通过的原件分别为target/python-agent-A-fix-first.xml、target/python-agent-A-fix-full-first.xml；随后补充HTTP200错误对象用例。首次Ruff6项问题修正后通过；临时入口验证命令一次tests导入路径失败及修复记录见[A实验说明](A_REAL_LLM_PRECHECK.md)。此前所有真实失败记录和原件均保留，没有弱化测试标准。本轮真实模型请求0，不读取P2/P4密钥。离线验收后经用户单独授权，将终审后的11个文件按白名单创建本地提交，main不变、不Merge/Push；真实A仍需单独费用授权。工程准备通过不代表真实DeepSeek兼容性、提示注入防御率或生产可靠性通过。
+首轮定向26通过和首次完整50通过的原件分别为target/python-agent-A-fix-first.xml、target/python-agent-A-fix-full-first.xml；随后补充HTTP200错误对象用例。首次Ruff6项问题修正后通过；临时入口验证命令一次tests导入路径失败及修复记录见[A实验说明](A_REAL_LLM_PRECHECK.md)。此前所有真实失败记录和原件均保留，没有弱化测试标准。该阶段发送真实模型请求 0 次，使用本地模型响应验证适配与错误分支。真实 A 场景另见下节。
 
-## 最终单次真实DeepSeek A：用户执行，审计通过
+## 真实 DeepSeek 单样本验收
 
-以上未调用模型的描述保留为各历史阶段记录。用户后续单独授权并执行A，当前代码HEAD为1ecd8e536084b832b61c06d5d9b240529a5e1e4f；本轮没有再次调用模型或重跑测试，只核查原件target/python-agent/A-model-5388778879b2.json与固定入口代码。
+A 场景采用真实模型，代码基线为 `1ecd8e536084b832b61c06d5d9b240529a5e1e4f`。本节依据固定入口及运行原件 `target/python-agent/A-model-5388778879b2.json`。
 
 结论A PASS，原件传输标记为network而非字面real，按实现对应真实AsyncHTTPTransport，非mock；模型调用2、模型HTTP尝试2/上限5、MCP工具调用1/上限3，blocked_http_attempts=0，无error。两次HTTP200，finish_reason依次tool_calls、stop；请求/响应model均deepseek-flash，显式非思考、输出限256。usage分别525/41/566及654/74/728（输入/输出/总），合计1179/115/1294。
 

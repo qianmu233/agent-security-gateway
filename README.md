@@ -4,13 +4,13 @@
 
 基于 LangGraph、MCP 与 Spring Security 的 Agent 工具调用安全网关。通过 Python Agent 与 Java MCP 服务协作，在业务工具真正执行前完成身份认证、权限校验、资源授权和高风险写操作验证。
 
-## 项目介绍
+## 项目简介
 
 Agent 可以根据用户问题生成工具调用，但模型提出调用并不代表用户有权执行该操作。
 
 例如，Agent 读取库存信息后，可能继续尝试修改采购单；即使模型已经生成了合法格式的工具请求，Java 服务端仍需要判断调用者是否有对应权限、订单是否属于该租户，以及本次写操作是否经过可信授权。
 
-本项目以库存查询和采购单修改为例，将 Agent 的工具调用流程与服务端业务授权分离。Python 使用 LangGraph 组织 Agent 执行过程，通过官方 MCP Python SDK 调用 Java 网关；Java 侧负责最终授权与业务执行。
+本项目以库存查询和采购单修改为例。Python 使用 LangGraph 组织 Agent 工作流，通过官方 MCP Python SDK 调用 Java 网关。Java 服务端独立决定是否执行请求。
 
 ## 技术栈
 
@@ -164,9 +164,9 @@ Agent 提出修改采购单的工具调用，但当前没有对应的有效写�
 
 在一次真实 DeepSeek 实验中，库存备注中的攻击内容进入了模型上下文，但模型没有提出危险的采购单修改调用，因此该次没有触发写操作授权分支。
 
-这与前两个场景不同：跨租户读取和缺少写意图的修改都实际到达了 Java，并由服务端拒绝；提示注入场景中，不能将模型没有提出危险调用说成网关成功阻断了该次攻击。
+跨租户读取和缺少写意图的修改均到达 Java 并被拒绝。此处的提示注入样本只观察到模型未提出危险调用。[真实 D/B/C 审计](docs/FINAL_REAL_LLM_DBC_AUDIT.md)
 
-## 本地运行
+## 快速启动
 
 需要 JDK 17 和 Maven。在 Windows PowerShell 中配置好 `JAVA_HOME` 后，从仓库根目录执行：
 
@@ -197,7 +197,30 @@ Python Agent 的依赖安装、CLI 参数和独立运行方式见 [`python-agent
 └── NOTICE
 ```
 
-## 开源协议
+## 测试与评测
+
+| 范围 | 已记录的验证结果 |
+|---|---|
+| Java HTTP 集成 | 20 项 JUnit 通过，含 24 场景评测入口 |
+| 本地安全评测 | 确定性 Mock 经过真实 MCP HTTP，8/8 合法场景通过，16/16 非法主请求被拒且未产生业务副作用 |
+| 并发重放 | 两个请求竞争同一写意图，一次写入成功，一次返回 `INTENT_REPLAY`，订单版本只递增一次 |
+| Python Agent | 原回归与合约 51 项通过，批量驱动离线验证 39 项通过 |
+| 真实 DeepSeek 小样本 | 一次合法库存读取成功。跨租户读取、缺少写意图的写请求由 Java 拒绝。另一提示注入样本未进入危险写授权分支 |
+
+本地场景结果包含在 Java 测试入口中。真实模型的结果按场景记录，样本量不足以估计通用防御率。[安全评测](docs/evaluation/report.md) · [并发验证](docs/phase3-verification.md#两个安全不变量与时间窗口) · [跨语言验证](docs/python-agent-verification.md)
+
+## 部署范围
+
+Java 默认监听本机地址，演示身份、ERP 状态、写意图及有界审计保存在单 JVM 内存中。一次性消费依赖同一进程内的锁及可信本地操作员确认。真实部署需要另行设计身份生命周期、审批入口、持久审计和跨实例一致性。
+
+## 技术文档
+
+- [授权流程、写意图和源码导航](docs/project-review.md)
+- [Python Agent 启动与配置](python-agent/README.md)
+- [真实模型合法读取](docs/FINAL_REAL_LLM_A_AUDIT.md)与[拒绝路径和注入观察](docs/FINAL_REAL_LLM_DBC_AUDIT.md)
+- [上游组件与项目实现](docs/upstream-vs-custom.md)
+
+## 开源许可证与第三方来源
 
 项目使用 Spring AI MCP 相关组件，并参考 [Spring AI Community MCP Security](https://github.com/spring-ai-community/mcp-security) 的认证集成方式。Agent 工作流基于 [LangGraph](https://github.com/langchain-ai/langgraph)，MCP 客户端使用 [官方 MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk)。
 
